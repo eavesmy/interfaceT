@@ -9,6 +9,7 @@ class Interface {
         this.id = uuid.v4();
         this.method = method;
         this.path = path;
+        this.headers = headers;
         this.params = [];
 
         if(typeof params == "object") {
@@ -39,7 +40,6 @@ class Interface {
         }
         
         this.callback = !!callback ? callback : (ctx) => {
-            console.log(ctx.obj);
         };
     }
 

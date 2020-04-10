@@ -1,6 +1,7 @@
 <script>
     
     import interfaces from '../lib/interface.js';
+    import Ctx from '../lib/ctx.js';
     import {OBJ, HISTORY, REQ_MSG,RES_MSG,REQ_STATUS,RES_STATUS } from '../service.js';
 
     export let item;
@@ -37,14 +38,18 @@
             method: item.method,
             body: (typeof params !== "string") ? JSON.stringify(params) : params,
             headers: item.headers || {},
-        }).then(res => {
+        }).then(async res => {
 
             REQ_STATUS.set(STATUS_SUCCESS);
+
+            let ctx  = new Ctx(res);
             
-            item.callback(res);
+            await item.callback(ctx);
             
-            REQ_MSG.set(res.msg);
-            OBJ.set(res.obj);
+            REQ_MSG.set(ctx.msg);
+            RES_MSG.set(JSON.stringify(ctx.body));
+
+            OBJ.set(ctx.obj);
 
         }).catch(err => {
             REQ_STATUS.set(STATUS_FAIELD);
