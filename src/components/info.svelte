@@ -19,3 +19,9 @@
         {JSON.stringify(obj)}
     </div>
 </div>
+
+<style>
+    .card-content {
+        word-break: break-all; 
+    }
+</style>

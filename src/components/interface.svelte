@@ -2,7 +2,8 @@
     
     import interfaces from '../lib/interface.js';
     import Ctx from '../lib/ctx.js';
-    import {OBJ, HISTORY, REQ_MSG,RES_MSG,REQ_STATUS,RES_STATUS } from '../service.js';
+    import {OBJ, HISTORY,SIGNAL} from '../service.js';
+    import { onMount } from 'svelte';
 
     export let item;
 
@@ -13,11 +14,20 @@
     let MSG_REQ = "";
     let MSG_RES = "";
 
+    let REQ_STATUS = STATUS_DEFAULT;
+    let RES_STATUS = STATUS_DEFAULT;
+
+    SIGNAL.subscribe(msg => {
+        if(msg == "start_" + item.id) {
+            Submit.call(item.el.querySelector(".is-submit"));
+        }
+    });
+
     async function Submit(){
         const that = this;
 
-        REQ_STATUS.set(STATUS_DEFAULT);
-        RES_STATUS.set(STATUS_DEFAULT);
+        REQ_STATUS = STATUS_DEFAULT;
+        RES_STATUS = STATUS_DEFAULT;
         
         MSG_REQ = "";
         MSG_RES = "";
@@ -29,9 +39,9 @@
         HISTORY.set(item);
 
         if(item.method == "ws://") {
-            dealWs(item);
+            await dealWs(item);
         } else {
-            dealHttp(item)
+            await dealHttp(item)
         }
     }
 
@@ -39,22 +49,25 @@
         let ws = new WebSocket(item.method + item.path);
 
         let ctx  = new Ctx();
-
-        ctx.setOutput(RES_MSG);
+        // ctx.setOutput(RES_MSG);
 
         ws.onmessage = (ret)=>{
             ctx.body = ret.data;
             item.callback(ctx);
+            MSG_RES = ctx.body
         }
 
         ws.onclose = () => {
-            RES_STATUS.set(STATUS_FAIELD);
-            RES_MSG.set("ws disconnec.");
+            RES_STATUS = STATUS_FAIELD;
+            MSG_RES = "ws disconnec.";
         }
+        SIGNAL.set("rd_" + item.id);
     }
 
     async function dealHttp(item){
         let headers = Interface.GetHeaders();
+
+        console.log(headers)
 
         let params = {};
 
@@ -72,32 +85,44 @@
             params[param.key] = param.value;
         }
 
-        let res = await fetch(item.path,{
+        await fetch(item.path,{
             method: item.method,
             body: (typeof params !== "string") ? JSON.stringify(params) : params,
             headers: Object.assign(item.headers || {},headers),
         }).then(async res => {
 
             if(res.status == 200) {
-                REQ_STATUS.set(STATUS_SUCCESS);
-                REQ_MSG.set("success");
+                REQ_STATUS = STATUS_SUCCESS;
+                MSG_REQ = "success";
             } else {
-                REQ_STATUS.set(STATUS_FAIELD);
+                REQ_STATUS = STATUS_FAIELD
             }
-
+            
             let ctx  = new Ctx(res);
+
+            ctx.body = await res.text();
+            
+            try {
+                ctx.body = JSON.parse(ctx.body);
+            } catch(e) { console.log(e) }
+
+            item.res = ctx.body;
+            item.parseRes();
             
             await item.callback(ctx);
+
+            MSG_RES = ctx.msg;
             
-            RES_MSG.set(ctx.msg);
-            RES_STATUS.set(ctx.status === false ? STATUS_FAIELD : STATUS_SUCCESS)
+            RES_STATUS = ctx.status === false ? STATUS_FAIELD : STATUS_SUCCESS
 
             OBJ.set(JSON.stringify(ctx.obj));
 
         }).catch(err => {
-            REQ_STATUS.set(STATUS_FAIELD);
-            REQ_MSG.set(err);
+            REQ_STATUS = STATUS_FAIELD
+            MSG_REQ = err;
         });
+
+        SIGNAL.set("rd_" + item.id);
     }
 
     function AsyncRead(reader) {
@@ -117,7 +142,7 @@
 
 </script>
 
-<div class="card">
+<div class="card" bind:this={item.el}>
     <header class="card-header">
         <p class="card-header-title is-5">
             {item.method} {item.path}
@@ -157,8 +182,12 @@
             </div>
         {/each}
     </div>
+    <div class="card-content">
+        <p class="notification {REQ_STATUS}">Req: {MSG_REQ}</p>
+        <p class="notification {RES_STATUS}">Req: {MSG_RES}</p>
+    </div>
     <footer class="card-footer">
-        <a class="card-footer-item is-success" on:click={Submit} data-id={item.id}>
+        <a class="card-footer-item is-success is-submit" on:click={Submit} data-id={item.id}>
             提交
         </a>
         <a class="card-footer-item is-info" on:click={Empty}>
@@ -166,4 +195,8 @@
         </a>
     </footer>
 </div>
-
+<style>
+    .notification {
+        word-break: break-all; 
+    }
+</style>
