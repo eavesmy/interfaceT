@@ -1,6 +1,8 @@
 import uuid from 'node-uuid';
 
+let map = {}
 let interfaces = {};
+let iHeaders = {};
 
 class Interface {
     
@@ -16,6 +18,7 @@ class Interface {
             for(let item in params) {
             
                 let type = "string";
+                let value = "";
 
                 switch(params[item]) {
                     case String:
@@ -29,12 +32,20 @@ class Interface {
                     break
                     case Object:
                     type = "object";
+                    break
+                    case File:
+                    type = "file";
+                    break
+                    default:
+                    type = typeof params[item];
+                    value = params[item];
                 }
 
                 this.params.push({
                     type : type,
                     key: item,
                     required: true,
+                    value
                 });
             }  
         }
@@ -56,8 +67,28 @@ class Interface {
         return list;
     }
 
-    static Get(id) {
+    static GetById(id) {
         return interfaces[id];
+    }
+
+    static Set(k,v) {
+        map[k] = v;  
+    }
+    static Get(k) {
+        return map[k] || null
+    }
+    static Empty(){
+        interfaces = {};
+        map = {};
+    }
+    static SetHeader(k,v){
+        iHeaders[k] = v;
+    }
+    static GetHeader(k) {
+        return iHeaders[k] || null;
+    }
+    static GetHeaders(){
+        return iHeaders;
     }
 }
 

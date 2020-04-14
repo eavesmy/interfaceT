@@ -46,6 +46,11 @@ Interface.Register({
             interfaces = Interface;
         }
     }
+
+    function Reset(){
+        interfaces = null;
+        Interface.Empty();
+    }
     
 </script>
 
@@ -94,6 +99,14 @@ Interface.Register({
                 </div>
                 <div class="column is-8" id="interface">
                     {#if !!interfaces}
+                        <div class="container buttons">
+                            <button class="button is-warning" on:click={Reset}>
+                                重新读取配置
+                            </button>
+                            <button class="button is-success">生成接口</button>
+                            <button class="button is-success">顺序测试</button>
+                            <button class="button is-success">顺序测试并生成报告</button>
+                        </div>
                         {#each interfaces.List() as item}
                             <C_INTERFACE item={item} />
                             <div class="content"></div>

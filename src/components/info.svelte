@@ -3,7 +3,9 @@
 
     let obj = {}
     OBJ.subscribe(item => {
-        obj = Object.assign({},item.obj);
+        if(!item) return;
+        item = JSON.parse(item);
+        obj = Object.assign({},obj,item);
     });
 </script>
 
