@@ -16,12 +16,19 @@
         </p>
     </header>
     <div class="card-content">
-        {JSON.stringify(obj,null,"\t")}
+        {@html JSON.stringify(obj,null,"<br>")}
     </div>
 </div>
 
 <style>
     .card-content {
         word-break: break-all; 
+        height: auto;
+    }
+    textarea {
+        resize: none;
+        width: 100%;
+        height: auto;
+        border: none;
     }
 </style>
