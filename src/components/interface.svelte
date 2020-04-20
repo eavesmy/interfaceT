@@ -145,6 +145,8 @@
 <div class="card" bind:this={item.el}>
     <header class="card-header">
         <p class="card-header-title is-5">
+            {item.readme || ""}
+            <br>
             {item.method} {item.path}
         </p>
     </header>
@@ -184,7 +186,7 @@
     </div>
     <div class="card-content">
         <p class="notification {REQ_STATUS}">Req: {MSG_REQ}</p>
-        <p class="notification {RES_STATUS}">Req: {MSG_RES}</p>
+        <p class="notification {RES_STATUS}">Res: {MSG_RES}</p>
     </div>
     <footer class="card-footer">
         <a class="card-footer-item is-success is-submit" on:click={Submit} data-id={item.id}>
