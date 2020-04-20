@@ -16,7 +16,7 @@
         </p>
     </header>
     <div class="card-content">
-        {JSON.stringify(obj)}
+        {JSON.stringify(obj,null,"\t")}
     </div>
 </div>
 
