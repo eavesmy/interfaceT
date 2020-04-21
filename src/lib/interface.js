@@ -121,13 +121,13 @@ class Interface {
     docRes(items,key){
         let text = "";
         if(!items) return text;
-
+        
         for(let item of items) {
             let _key = !!key ? key + "." + item.key : item.key;
             text += `|${_key}|${item.type}|${item.remark || "null"}| \n`
-            if(item.type == "array" || item.type == "object") {
+            if(item.type == "object" || item.type == "array") {
                 text += `${this.docRes(item.val,_key)} \n`
-            } 
+            }
         }
         return text;
     }
@@ -135,40 +135,24 @@ class Interface {
     parseRes(){
         if(!this.res) return
 
-        let ret = this.traverseRes(this.res);
+        let ret = Interface.traverseRes(this.res);
         this.res = ret;
     }
 
-    traverseRes(obj){
+    static traverseRes(obj){
         let ret = [];
         for(let key in obj) {
             let _type = typeof obj[key];
 
             if(_type == "object" && Array.isArray(obj[key])) {
-                ret.push({key,type: "array",val:obj[key]});
+                ret.push({key,type: "array",val: Interface.traverseRes(obj[key][0])});
             } else if(_type == "object" && !Array.isArray(obj[key])){
-                ret.push({key,val:this.traverseRes(obj[key]),type: _type});
+                ret.push({key,val:Interface.traverseRes(obj[key]),type: _type});
             } else {
                 ret.push({key,val:obj[key],type:_type});
             }
         }
         return ret
-        /*
-if(_type == "object" && Array.isArray(obj[key])) {
-                ret[key] = {
-                    key,val: obj[key],type: "array"
-                }
-            } else if(_type == "object" && !Array.isArray(obj[key])){
-                ret[key] = {
-                    key,val: this.traverseRes(obj[key]),type: _type
-                }
-            } else {
-                ret[key] = {
-                    key,val:obj[key],type: _type
-                }
-            }
-    */
-
     }
 
     static Register(data) {
