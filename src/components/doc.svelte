@@ -11,7 +11,7 @@
 
     function Download(){
 
-        let filename = "interface.md";
+        let filename = "interface.html";
         
         var eleLink = document.createElement('a');
         eleLink.download = filename;

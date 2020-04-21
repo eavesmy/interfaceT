@@ -1,34 +1,43 @@
 <script>
-    import { OBJ } from '../service.js';
+    import interfaces from '../lib/interface.js';
 
-    let obj = {}
-    OBJ.subscribe(item => {
-        if(!item) return;
-        item = JSON.parse(item);
-        obj = Object.assign({},obj,item);
-    });
+    import Info from './info.svelte';
+
+    export let items;
+    export let id;
+
+    let _id = null;
+
+    function Submit(){
+        interfaces[id].res = items;
+        alert("提交完毕");
+    }
 </script>
 
-<div class="card">
-    <header class="card-header">
-        <p class="card-header-title">
-            变量
-        </p>
-    </header>
-    <div class="card-content">
-        {@html JSON.stringify(obj,null,"<br>")}
-    </div>
+<div class="card-content">
+    {#each items as item}
+        <div class="columns">
+            <div class="column">
+                <b>{item.key}</b> 
+            </div>
+            {#if item.type !== "array" && item.type !== "object"}
+                <div class="column is-half">
+                    {item.val}
+                </div>
+                <div class="column">
+                    <input class="input is-small" type="text" placeholder="{item.key} 描述" bind:value={item.remark}>
+                </div>
+            {:else}
+               <Info id={_id} items={item.val} />
+            {/if}
+        </div>
+    {/each}
+    {#if !!id}
+        <button class="button is-success" on:click={Submit}>
+            提交描述
+        </button>
+    {/if}
 </div>
 
 <style>
-    .card-content {
-        word-break: break-all; 
-        height: auto;
-    }
-    textarea {
-        resize: none;
-        width: 100%;
-        height: auto;
-        border: none;
-    }
 </style>

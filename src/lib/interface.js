@@ -19,6 +19,8 @@ class Interface {
 
         if(typeof params == "object") {
             for(let item in params) {
+
+                if(item.indexOf("remark_") > -1) continue
             
                 let type = "string";
                 let value = "";
@@ -43,12 +45,17 @@ class Interface {
                     type = typeof params[item];
                     value = params[item];
                 }
+                
+                let remark = "";
+                if(!!params["remark_" + item]) {
+                    remark = params["remark_" + item]
+                }
 
                 this.params.push({
                     type : type,
                     key: item,
                     required: true,
-                    value
+                    value,remark
                 });
             }  
         }
@@ -77,16 +84,25 @@ class Interface {
         text += `#### headers \n`
         text += `${JSON.stringify(this.headers)} \n`
         text += `#### Params: \n`
+        text += `|字段|类型|描述| \n`
+        text += `| --- | --- | --- | \n`
 
         for(let item of this.params) {
+            if(item.key.indexOf("remark_") > -1) continue
             let _type = item.type;
             if(_type === "file") _type = "base64 string"
-            text += `- ${item.key} [${_type}] \n`
+            text += `|${item.key}|${_type}|${item.remark || ""}|\n`
         }
 
         text += `\n`
         text += `#### Res \n`
-        text += `${JSON.stringify(this.res)} \n`
+
+        text += `|字段|类型|描述| \n`;
+        text += `| --- | --- | --- | \n`
+
+        let res = this.docRes(this.res);
+
+        text += `${res} \n`
         text += `\n`
         text += `------------------------------`
         text += `\n \n`
@@ -94,28 +110,65 @@ class Interface {
         return text
     }
 
+    /*
+     *  res:
+     *  Msg  [type]  [示例]  [描述]
+     *  Data
+     *      A [type] [示例] [描述]
+     *
+     * */
+
+    docRes(items,key){
+        let text = "";
+        if(!items) return text;
+
+        for(let item of items) {
+            let _key = !!key ? key + "." + item.key : item.key;
+            text += `|${_key}|${item.type}|${item.remark || "null"}| \n`
+            if(item.type == "array" || item.type == "object") {
+                text += `${this.docRes(item.val,_key)} \n`
+            } 
+        }
+        return text;
+    }
+
     parseRes(){
         if(!this.res) return
-        console.log(this.res,typeof this.res);
 
         let ret = this.traverseRes(this.res);
         this.res = ret;
     }
 
     traverseRes(obj){
-        let ret = {};
+        let ret = [];
         for(let key in obj) {
             let _type = typeof obj[key];
 
             if(_type == "object" && Array.isArray(obj[key])) {
-                ret[key] = "array";
+                ret.push({key,type: "array",val:obj[key]});
             } else if(_type == "object" && !Array.isArray(obj[key])){
-                ret[key] = this.traverseRes(obj[key]);
+                ret.push({key,val:this.traverseRes(obj[key]),type: _type});
             } else {
-                ret[key] = typeof obj[key];
+                ret.push({key,val:obj[key],type:_type});
             }
         }
         return ret
+        /*
+if(_type == "object" && Array.isArray(obj[key])) {
+                ret[key] = {
+                    key,val: obj[key],type: "array"
+                }
+            } else if(_type == "object" && !Array.isArray(obj[key])){
+                ret[key] = {
+                    key,val: this.traverseRes(obj[key]),type: _type
+                }
+            } else {
+                ret[key] = {
+                    key,val:obj[key],type: _type
+                }
+            }
+    */
+
     }
 
     static Register(data) {

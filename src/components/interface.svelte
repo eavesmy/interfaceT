@@ -2,8 +2,9 @@
     
     import interfaces from '../lib/interface.js';
     import Ctx from '../lib/ctx.js';
-    import {OBJ, HISTORY,SIGNAL} from '../service.js';
+    import {HISTORY,SIGNAL} from '../service.js';
     import { onMount } from 'svelte';
+    import Info from './info.svelte';
 
     export let item;
 
@@ -16,6 +17,8 @@
 
     let REQ_STATUS = STATUS_DEFAULT;
     let RES_STATUS = STATUS_DEFAULT;
+
+    let RESULT = "";
 
     SIGNAL.subscribe(msg => {
         if(msg == "start_" + item.id) {
@@ -67,8 +70,6 @@
     async function dealHttp(item){
         let headers = Interface.GetHeaders();
 
-        console.log(headers)
-
         let params = {};
 
         for(let param of item.params) {
@@ -107,15 +108,16 @@
             } catch(e) { console.log(e) }
 
             item.res = ctx.body;
-            item.parseRes();
-            
-            await item.callback(ctx);
+            item.parseRes()
 
-            MSG_RES = ctx.msg;
+            RESULT = item.res;
             
+            if(!!item.callback) {
+                await item.callback(ctx);
+                MSG_RES = ctx.msg;
+            }
             RES_STATUS = ctx.status === false ? STATUS_FAIELD : STATUS_SUCCESS
-
-            OBJ.set(JSON.stringify(ctx.obj));
+            // OBJ.set(JSON.stringify(ctx.obj));
 
         }).catch(err => {
             REQ_STATUS = STATUS_FAIELD
@@ -140,6 +142,8 @@
         item = item;
     }
 
+    // TODO: 提交后，展示一个 res payload 的框，里面有 res 的 data
+
 </script>
 
 <div class="card" bind:this={item.el}>
@@ -153,7 +157,7 @@
     <div class="card-content">
         {#each item.params as param}
             <div class="field is-horizontal">
-                <div class="field-label is-normarl">
+                <div class="field-label is-normal">
                     <label class="label">
                         {param.key}
                     </label>
@@ -176,7 +180,7 @@
                                   </label>
                                 </div>
                             {:else}
-                                <input class="input" type="text" placeholder={param.type} bind:value={param.value}>
+                                <input class="input" type="text" placeholder="{param.type} {param.remark}" bind:value={param.value}>
                             {/if}
                         </div>
                     </div>
@@ -188,6 +192,9 @@
         <p class="notification {REQ_STATUS}">Req: {MSG_REQ}</p>
         <p class="notification {RES_STATUS}">Res: {MSG_RES}</p>
     </div>
+    {#if !!RESULT}
+    <Info id={item.id} items={RESULT} />
+    {/if}
     <footer class="card-footer">
         <a class="card-footer-item is-success is-submit" on:click={Submit} data-id={item.id}>
             提交

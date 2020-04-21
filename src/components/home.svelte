@@ -10,7 +10,6 @@
 
     let readme = `说明文档: https://github.com/eavesmy/interfaceT `
 
-    import C_INFO from './info.svelte';
     import C_HISTORY from './history.svelte';
     import C_INTERFACE from './interface.svelte';
 
@@ -20,7 +19,11 @@
         reader.readAsText(file);
 
         reader.onload = (e) => {
-            eval(e.target.result);
+            try {
+                eval(e.target.result);
+            } catch(e) {
+                if(!!e) console.log(e);
+            }
             interfaces = Interface;
         }
     }
@@ -85,8 +88,6 @@
             <div class="content"></div>
             <div class="columns">
                 <div class="column is-4">
-                    <C_INFO />
-                    <div class="content"></div>
                     <C_HISTORY />
                     <div class="content"></div>
                     <div class="card">
